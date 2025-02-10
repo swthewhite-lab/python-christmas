@@ -1,0 +1,27 @@
+name: Check Commit Message Convention
+
+on:
+  pull_request:
+    branches: [ develop ]
+
+jobs:
+  check-commit-message:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Get last commit message
+        run: |
+          commit_message=$(git log --format=%s -n 1)
+          echo "Last commit message: $commit_message"
+          echo "COMMIT_MESSAGE=$commit_message" >> $GITHUB_ENV
+
+      - name: Validate commit message
+        run: |
+          if [[ ! "$COMMIT_MESSAGE" =~ ^(feat|fix|docs|style|refactor|test|chore)(\(.+\))?!?:\ .+ ]]; then
+            echo "❌ Commit message does not follow the convention!"
+            echo "Example: 'feat: add login API'"
+            exit 1
+          fi
+          echo "✅ Commit message follows the convention!"
