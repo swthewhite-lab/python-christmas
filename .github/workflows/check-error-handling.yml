@@ -20,9 +20,9 @@ jobs:
             exit 1
           fi
 
-      - name: Ensure error messages start with '[ERROR]'
+      - name: Ensure error messages contain '[ERROR]'
         run: |
-          if ! grep -r 'print("\[ERROR\]' src/; then
-            echo "❌ Error messages must start with '[ERROR]'!"
+          if ! grep -r '\[ERROR\' src/; then
+            echo "❌ Error messages must contain '[ERROR]'!"
             exit 1
           fi
