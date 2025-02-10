@@ -1,0 +1,44 @@
+name: Check No External Libraries
+
+on:
+  push:
+    branches: [ '*' ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  check-no-external-libs:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: "3.9"
+
+      - name: Ensure no external libraries are imported
+        run: |
+          python -c "
+          import os
+          import ast
+
+          allowed_modules = {'sys', 'os', 'math', 'random', 'datetime', 're'}
+
+          def check_imports(file_path):
+              with open(file_path, 'r', encoding='utf-8') as f:
+                  tree = ast.parse(f.read(), filename=file_path)
+                  for node in ast.walk(tree):
+                      if isinstance(node, ast.Import):
+                          for alias in node.names:
+                              if alias.name not in allowed_modules:
+                                  raise SystemExit(f'❌ External library detected: {alias.name} in {file_path}')
+                      elif isinstance(node, ast.ImportFrom):
+                          if node.module and node.module not in allowed_modules:
+                              raise SystemExit(f'❌ External library detected: {node.module} in {file_path}')
+
+          for root, _, files in os.walk('src'):
+              for file in files:
+                  if file.endswith('.py'):
+                      check_imports(os.path.join(root, file))"

@@ -1,0 +1,21 @@
+name: Check No Ternary Operator
+
+on:
+  push:
+    branches: [ '*' ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  check-no-ternary:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      - name: Ensure ternary operators are not used
+        run: |
+          if grep -r 'if .* else' src/; then
+            echo "❌ Ternary operators are not allowed!"
+            exit 1
+          fi

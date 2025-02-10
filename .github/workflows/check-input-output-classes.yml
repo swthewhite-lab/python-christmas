@@ -1,0 +1,39 @@
+name: Check InputView and OutputView Classes
+
+on:
+  push:
+    branches: [ '*' ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  check-view-classes:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      - name: Ensure InputView and OutputView exist
+        run: |
+          if ! grep -r "class InputView" src/; then
+            echo "❌ 'InputView' class not found!"
+            exit 1
+          fi
+          if ! grep -r "class OutputView" src/; then
+            echo "❌ 'OutputView' class not found!"
+            exit 1
+          fi
+
+      - name: Ensure InputView contains input()
+        run: |
+          if ! grep -r "input(" src/input_view.py; then
+            echo "❌ 'InputView' class must use input()!"
+            exit 1
+          fi
+
+      - name: Ensure OutputView contains print()
+        run: |
+          if ! grep -r "print(" src/output_view.py; then
+            echo "❌ 'OutputView' class must use print()!"
+            exit 1
+          fi

@@ -1,0 +1,21 @@
+name: Check No sys.exit()
+
+on:
+  push:
+    branches: [ '*' ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  check-no-sys-exit:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      - name: Ensure sys.exit() is not used
+        run: |
+          if grep -r 'sys.exit()' src/; then
+            echo "❌ sys.exit() is not allowed!"
+            exit 1
+          fi

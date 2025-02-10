@@ -1,0 +1,21 @@
+name: Check No Else Keyword
+
+on:
+  push:
+    branches: [ '*' ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  check-no-else:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      - name: Ensure else is not used
+        run: |
+          if grep -r '\belse\b' src/; then
+            echo "❌ 'else' keyword is not allowed!"
+            exit 1
+          fi

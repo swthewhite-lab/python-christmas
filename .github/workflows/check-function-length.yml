@@ -1,0 +1,27 @@
+name: Check Function Length
+
+on:
+  push:
+    branches: [ '*' ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  check-function-length:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      - name: Install pylint
+        run: pip install pylint
+
+      - name: Create pylint config
+        run: |
+          echo "[DESIGN]" > .pylintrc
+          echo "max-locals=10" >> .pylintrc
+          echo "max-args=5" >> .pylintrc
+          echo "max-statements=15" >> .pylintrc
+
+      - name: Run pylint
+        run: pylint --rcfile=.pylintrc src/

@@ -1,0 +1,28 @@
+name: Check Error Handling
+
+on:
+  push:
+    branches: [ '*' ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  check-error-handling:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      - name: Ensure ValueError is used for invalid inputs
+        run: |
+          if ! grep -r "raise ValueError" src/; then
+            echo "❌ No ValueError found for invalid inputs!"
+            exit 1
+          fi
+
+      - name: Ensure error messages start with '[ERROR]'
+        run: |
+          if ! grep -r 'print("\[ERROR\]' src/; then
+            echo "❌ Error messages must start with '[ERROR]'!"
+            exit 1
+          fi
