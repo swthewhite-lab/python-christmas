@@ -1,29 +1,53 @@
 name: Check Commit Message Convention
 
-on:
-  push:
-    branches: [ '*' ]
-  pull_request:
-    branches: [ main ]
+on: pull_request
 
 jobs:
   check-commit-message:
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout code
+      - name: Checkout code with full history
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0  # 전체 Git 히스토리를 가져옴
 
-      - name: Get last commit message
-        run: |
-          commit_message=$(git log --format=%s -n 1)
-          echo "Last commit message: $commit_message"
-          echo "COMMIT_MESSAGE=$commit_message" >> $GITHUB_ENV
+      - name: Get base branch
+        run: echo "BASE_BRANCH=${{ github.base_ref }}" >> $GITHUB_ENV
 
-      - name: Validate commit message
+      - name: Get all new commit messages in PR
         run: |
-          if [[ ! "$COMMIT_MESSAGE" =~ ^(feat|fix|docs|style|refactor|test|chore)(\(.+\))?!?:\ .+ ]]; then
-            echo "❌ Commit message does not follow the convention!"
-            echo "Example: 'feat: add login API'"
+          commit_messages=$(git log --format=%s origin/$BASE_BRANCH..HEAD)
+          echo "Commit Messages in PR:"
+          echo "$commit_messages"
+          echo "COMMIT_MESSAGES<<EOF" >> $GITHUB_ENV
+          echo "$commit_messages" >> $GITHUB_ENV
+          echo "EOF" >> $GITHUB_ENV
+
+      - name: Validate commit messages
+        run: |
+          invalid_commits=0
+          echo "🔍 Checking commit message convention..."
+          
+          while IFS= read -r commit_message; do
+            # "Merge"로 시작하는 메시지는 검사에서 제외
+            if [[ "$commit_message" =~ ^Merge ]]; then
+              echo "⚡ Skipping merge commit: $commit_message"
+              continue
+            fi
+
+            # Commit message validation (이슈 번호 기반 형식 검사)
+            if [[ ! "$commit_message" =~ ^\[\#[0-9]+\]\ .+ ]]; then
+              echo "❌ Invalid commit message format: $commit_message"
+              invalid_commits=$((invalid_commits + 1))
+            else
+              echo "✅ Valid commit message: $commit_message"
+            fi
+          done <<< "$COMMIT_MESSAGES"
+
+          if [[ $invalid_commits -gt 0 ]]; then
+            echo "🚨 Some commit messages do not follow the convention!"
+            echo "Example: '[#1] 로그인 기능 함수 추가'"
             exit 1
           fi
-          echo "✅ Commit message follows the convention!"
+
+          echo "🎉 All commit messages follow the convention!"
