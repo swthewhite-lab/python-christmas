@@ -5,9 +5,6 @@ on:
   pull_request:
     branches: [ main ]
 
-# https://docs.github.com/en/actions/using-jobs/assigning-permissions-to-jobs
-# `contents` is for permission to the contents of the repository.
-# `pull-requests` is for permission to pull request
 permissions:
   contents: write
   checks: write
@@ -30,9 +27,10 @@ jobs:
           pip install flake8 pytest pytest-cov
           if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
 
-      - name: Build coverage file
+      - name: Run tests with coverage
         run: |
           pytest --junitxml=pytest.xml --cov-report=term-missing:skip-covered --cov=. tests/ | tee pytest-coverage.txt
+        continue-on-error: false  # 테스트가 실패하면 CI/CD 실패 처리
 
       - name: Pytest coverage comment
         id: coverageComment
@@ -46,13 +44,16 @@ jobs:
           echo "Coverage Percentage - ${{ steps.coverageComment.outputs.coverage }}"
           echo "Coverage Color - ${{ steps.coverageComment.outputs.color }}"
           echo "Coverage Html - ${{ steps.coverageComment.outputs.coverageHtml }}"
-
           echo "Coverage Warnings - ${{ steps.coverageComment.outputs.warnings }}"
-
           echo "Coverage Errors - ${{ steps.coverageComment.outputs.errors }}"
           echo "Coverage Failures - ${{ steps.coverageComment.outputs.failures }}"
           echo "Coverage Skipped - ${{ steps.coverageComment.outputs.skipped }}"
           echo "Coverage Tests - ${{ steps.coverageComment.outputs.tests }}"
           echo "Coverage Time - ${{ steps.coverageComment.outputs.time }}"
-
           echo "Not Success Test Info - ${{ steps.coverageComment.outputs.notSuccessTestInfo }}"
+
+      - name: Fail if tests failed
+        if: steps.coverageComment.outputs.failures != '0' || steps.coverageComment.outputs.errors != '0'
+        run: |
+          echo "❌ Tests failed. Check the test report."
+          exit 1
